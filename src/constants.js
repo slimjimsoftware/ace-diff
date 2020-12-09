@@ -3,6 +3,7 @@ module.exports = {
   DIFF_DELETE: -1,
   DIFF_INSERT: 1,
   EDITOR_RIGHT: 'right',
+  EDITOR_COMMON: 'common',
   EDITOR_LEFT: 'left',
   RTL: 'rtl',
   LTR: 'ltr',

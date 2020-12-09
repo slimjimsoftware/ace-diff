@@ -1,4 +1,4 @@
-.acediff { // .acediff class itself got no styles
+.acediff3 { // .acediff class itself got no styles
 
   // We have to provide some dimensions for the ACE editor
   // This will expand to whathever space is available
@@ -17,7 +17,7 @@
     overflow: auto;
   }
 
-  &__gutter {
+  &__gutter1, &__gutter2 {
     flex: 0 0 60px;
     border-left: 1px solid darken($gutterBackground, 20);
     border-right: 1px solid darken($gutterBackground, 20);
@@ -28,7 +28,8 @@
       background-color: $gutterBackground;
     }
   }
-  &__left, &__right {
+
+  &__left, &__right, &__common {
     height: 100%;
     flex: 1;
   }
