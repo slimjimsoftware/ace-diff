@@ -493,7 +493,11 @@ function addConnector(acediff3, leftEditor, rightEditor, leftStartLine, leftEndL
   const el = document.createElementNS(C.SVG_NS, 'path');
   el.setAttribute('d', d);
   el.setAttribute('class', acediff3.options.classes.connector);
-  acediff3.gutterSVG.appendChild(el);
+  if (leftEditor === acediff3.editors.left) {
+    acediff3.gutterSVG1.appendChild(el);
+  } else {
+    acediff3.gutterSVG2.appendChild(el);
+  }
 }
 
 function addCopyArrows(acediff3, info, diffIndex) {
@@ -736,20 +740,24 @@ function isLastChar(editor, char, startsWithNewline) {
 }
 
 function createGutter(acediff3) {
-  acediff3.gutterHeight = document.getElementById(acediff3.options.classes.gutter1).clientHeight;
-  acediff3.gutterWidth = document.getElementById(acediff3.options.classes.gutter1).clientWidth;
+  acediff3.gutterHeight = Math.max(document.getElementById(acediff3.options.classes.gutter1).clientHeight, document.getElementById(acediff3.options.classes.gutter2).clientHeight);
+  acediff3.gutterWidth = Math.max(document.getElementById(acediff3.options.classes.gutter1).clientWidth, document.getElementById(acediff3.options.classes.gutter2).clientWidth);
 
   const leftHeight = getTotalHeight(acediff3, C.EDITOR_LEFT);
   const commonHeight = getTotalHeight(acediff3, C.EDITOR_COMMON);
   const rightHeight = getTotalHeight(acediff3, C.EDITOR_RIGHT);
   const height = Math.max(leftHeight, rightHeight, commonHeight, acediff3.gutterHeight);
 
-  acediff3.gutterSVG = document.createElementNS(C.SVG_NS, 'svg');
-  acediff3.gutterSVG.setAttribute('width', acediff3.gutterWidth);
-  acediff3.gutterSVG.setAttribute('height', height);
+  acediff3.gutterSVG1 = document.createElementNS(C.SVG_NS, 'svg');
+  acediff3.gutterSVG1.setAttribute('width', acediff3.gutterWidth);
+  acediff3.gutterSVG1.setAttribute('height', height);
 
-  document.getElementById(acediff3.options.classes.gutter1).appendChild(acediff3.gutterSVG);
-  document.getElementById(acediff3.options.classes.gutter2).appendChild(acediff3.gutterSVG);
+  acediff3.gutterSVG2 = document.createElementNS(C.SVG_NS, 'svg');
+  acediff3.gutterSVG2.setAttribute('width', acediff3.gutterWidth);
+  acediff3.gutterSVG2.setAttribute('height', height);
+
+  document.getElementById(acediff3.options.classes.gutter1).appendChild(acediff3.gutterSVG1);
+  document.getElementById(acediff3.options.classes.gutter2).appendChild(acediff3.gutterSVG2);
 }
 
 // acediff3.editors.left.ace.getSession().getLength() * acediff3.lineHeight
@@ -771,8 +779,8 @@ function createCopyContainers(acediff3) {
 
 function clearGutter(acediff3) {
   // gutter.innerHTML = '';
-  document.getElementById(acediff3.options.classes.gutter1).removeChild(acediff3.gutterSVG);
-  document.getElementById(acediff3.options.classes.gutter2).removeChild(acediff3.gutterSVG);
+  document.getElementById(acediff3.options.classes.gutter1).removeChild(acediff3.gutterSVG1);
+  document.getElementById(acediff3.options.classes.gutter2).removeChild(acediff3.gutterSVG2);
   createGutter(acediff3);
 }
 
