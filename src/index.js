@@ -1,4 +1,4 @@
-/* eslint-disable max-len */
+/* eslint-disable max-len,no-nested-ternary */
 /* eslint-disable no-console,no-use-before-define,camelcase,no-param-reassign,no-plusplus,block-scoped-var,no-redeclare,no-var,vars-on-top */
 
 // Diffing library
@@ -78,7 +78,7 @@ function AceDiff3(options = {}) {
       content: null,
       mode: null,
       theme: null,
-      editable: true,
+      editable: false,
       copyLinkEnabled: true,
     },
     classes: {
@@ -230,10 +230,13 @@ AceDiff3.prototype = {
 
     // parse the raw diff into something a little more palatable
     const diffs1 = [];
-    const diffs2 = [];
-    const offset = {
+    const offset1 = {
       left: 0,
-      common: 0,
+      right: 0,
+    };
+    const diffs2 = [];
+    const offset2 = {
+      left: 0,
       right: 0,
     };
 
@@ -253,14 +256,14 @@ AceDiff3.prototype = {
         return;
       }
       if (chunkType === C.DIFF_EQUAL) {
-        offset.left += text.length;
-        offset.common += text.length;
+        offset1.left += text.length;
+        offset1.right += text.length;
       } else if (chunkType === C.DIFF_DELETE) {
-        diffs1.push(computeDiff(this, C.DIFF_DELETE, offset.left, offset.common, text));
-        offset.common += text.length;
+        diffs1.push(computeDiff(this, C.DIFF_DELETE, this.editors.left, this.editors.common, offset1.left, offset1.right, text));
+        offset1.right += text.length;
       } else if (chunkType === C.DIFF_INSERT) {
-        diffs1.push(computeDiff(this, C.DIFF_INSERT, offset.left, offset.common, text));
-        offset.left += text.length;
+        diffs1.push(computeDiff(this, C.DIFF_INSERT, this.editors.left, this.editors.common, offset1.left, offset1.right, text));
+        offset1.left += text.length;
       }
     }, this);
 
@@ -280,14 +283,14 @@ AceDiff3.prototype = {
         return;
       }
       if (chunkType === C.DIFF_EQUAL) {
-        offset.common += text.length;
-        offset.right += text.length;
+        offset2.left += text.length;
+        offset2.right += text.length;
       } else if (chunkType === C.DIFF_DELETE) {
-        diffs2.push(computeDiff(this, C.DIFF_DELETE, offset.common, offset.right, text));
-        offset.right += text.length;
+        diffs2.push(computeDiff(this, C.DIFF_DELETE, this.editors.common, this.editors.right, offset2.left, offset2.right, text));
+        offset2.right += text.length;
       } else if (chunkType === C.DIFF_INSERT) {
-        diffs2.push(computeDiff(this, C.DIFF_INSERT, offset.common, offset.right, text));
-        offset.common += text.length;
+        diffs2.push(computeDiff(this, C.DIFF_INSERT, this.editors.common, this.editors.right, offset2.left, offset2.right, text));
+        offset2.left += text.length;
       }
     }, this);
 
@@ -351,7 +354,7 @@ function addEventHandlers(acediff3) {
     });
   }
   if (acediff3.options.right.copyLinkEnabled) {
-    query.on(`#${acediff3.options.classes.gutter2}`, 'click', `.${acediff3.options.classes.newCodeConnectorLink}`, (e) => {
+    query.on(`#${acediff3.options.classes.gutter2}`, 'click', `.${acediff3.options.classes.deletedCodeConnectorLink}`, (e) => {
       copy(acediff3, e, C.RTL);
     });
   }
@@ -423,7 +426,6 @@ function showDiff(acediff3, editor, startLine, endLine, className) {
   const editorInstance = acediff3.editors[editor];
 
   if (endLine < startLine) { // can this occur? Just in case.
-    // eslint-disable-next-line no-param-reassign
     endLine = startLine;
   }
 
@@ -549,7 +551,7 @@ function positionCopyContainers(acediff3) {
  * rightEndLine, it means that new content from the other editor is being inserted and a single 1px line will be
  * drawn.
  */
-function computeDiff(acediff3, diffType, offsetLeft, offsetRight, diffText) {
+function computeDiff(acediff3, diffType, leftEditor, rightEditor, offsetLeft, offsetRight, diffText) {
   let lineInfo = {};
 
   // this was added in to hack around an oddity with the Google lib. Sometimes it would include a newline
@@ -559,14 +561,14 @@ function computeDiff(acediff3, diffType, offsetLeft, offsetRight, diffText) {
 
   if (diffType === C.DIFF_INSERT) {
     // pretty confident this returns the right stuff for the left editor: start & end line & char
-    var info = getSingleDiffInfo(acediff3.editors.left, offsetLeft, diffText);
+    var info = getSingleDiffInfo(leftEditor, offsetLeft, diffText);
 
     // this is the ACTUAL undoctored current line in the other editor. It's always right. Doesn't mean it's
     // going to be used as the start line for the diff though.
-    var currentLineOtherEditor = getLineForCharPosition(acediff3.editors.right, offsetRight);
-    var numCharsOnLineOtherEditor = getCharsOnLine(acediff3.editors.right, currentLineOtherEditor);
-    const numCharsOnLeftEditorStartLine = getCharsOnLine(acediff3.editors.left, info.startLine);
-    var numCharsOnLine = getCharsOnLine(acediff3.editors.left, info.startLine);
+    var currentLineOtherEditor = getLineForCharPosition(rightEditor, offsetRight);
+    var numCharsOnLineOtherEditor = getCharsOnLine(rightEditor, currentLineOtherEditor);
+    const numCharsOnLeftEditorStartLine = getCharsOnLine(leftEditor, info.startLine);
+    var numCharsOnLine = getCharsOnLine(leftEditor, info.startLine);
 
     // this is necessary because if a new diff starts on the FIRST char of the left editor, the diff can comes
     // back from google as being on the last char of the previous line so we need to bump it up one
@@ -574,7 +576,7 @@ function computeDiff(acediff3, diffType, offsetLeft, offsetRight, diffText) {
     if (numCharsOnLine === 0 && newContentStartsWithNewline) {
       newContentStartsWithNewline = false;
     }
-    if (info.startChar === 0 && isLastChar(acediff3.editors.right, offsetRight, newContentStartsWithNewline)) {
+    if (info.startChar === 0 && isLastChar(rightEditor, offsetRight, newContentStartsWithNewline)) {
       rightStartLine = currentLineOtherEditor + 1;
     }
 
@@ -606,12 +608,12 @@ function computeDiff(acediff3, diffType, offsetLeft, offsetRight, diffText) {
       rightEndLine: rightStartLine + numRows,
     };
   } else {
-    var info = getSingleDiffInfo(acediff3.editors.right, offsetRight, diffText);
+    var info = getSingleDiffInfo(rightEditor, offsetRight, diffText);
 
-    var currentLineOtherEditor = getLineForCharPosition(acediff3.editors.left, offsetLeft);
-    var numCharsOnLineOtherEditor = getCharsOnLine(acediff3.editors.left, currentLineOtherEditor);
-    const numCharsOnRightEditorStartLine = getCharsOnLine(acediff3.editors.right, info.startLine);
-    var numCharsOnLine = getCharsOnLine(acediff3.editors.right, info.startLine);
+    var currentLineOtherEditor = getLineForCharPosition(leftEditor, offsetLeft);
+    var numCharsOnLineOtherEditor = getCharsOnLine(leftEditor, currentLineOtherEditor);
+    const numCharsOnRightEditorStartLine = getCharsOnLine(rightEditor, info.startLine);
+    var numCharsOnLine = getCharsOnLine(rightEditor, info.startLine);
 
     // this is necessary because if a new diff starts on the FIRST char of the left editor, the diff can comes
     // back from google as being on the last char of the previous line so we need to bump it up one
@@ -619,7 +621,7 @@ function computeDiff(acediff3, diffType, offsetLeft, offsetRight, diffText) {
     if (numCharsOnLine === 0 && newContentStartsWithNewline) {
       newContentStartsWithNewline = false;
     }
-    if (info.startChar === 0 && isLastChar(acediff3.editors.left, offsetLeft, newContentStartsWithNewline)) {
+    if (info.startChar === 0 && isLastChar(leftEditor, offsetLeft, newContentStartsWithNewline)) {
       leftStartLine = currentLineOtherEditor + 1;
     }
 
@@ -762,7 +764,7 @@ function createGutter(acediff3) {
 
 // acediff3.editors.left.ace.getSession().getLength() * acediff3.lineHeight
 function getTotalHeight(acediff3, editor) {
-  const ed = (editor === C.EDITOR_COMMON) ? acediff3.editors.common : acediff3.editors.right;
+  const ed = (editor === C.EDITOR_COMMON) ? acediff3.editors.common : (editor === C.EDITOR_LEFT) ? acediff3.editors.left : acediff3.editors.right;
   return ed.ace.getSession().getLength() * acediff3.lineHeight;
 }
 
