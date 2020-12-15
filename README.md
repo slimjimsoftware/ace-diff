@@ -22,7 +22,7 @@ Copy the files from ```dist/``` into your project.
 Here's an example of how you'd instantiate AceDiff3.
 
 ```js
-const differ = new AceDiff({
+const differ = new AceDiff3({
   ace: window.ace, // You Ace Editor instance
   element: '.acediff3',
   left: {
