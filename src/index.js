@@ -502,28 +502,31 @@ function addConnector(acediff3, leftEditor, rightEditor, leftStartLine, leftEndL
   }
 }
 
-function addCopyArrows(acediff3, info, diffIndex) {
-  if (info.leftEndLine > info.leftStartLine && acediff3.options.left.copyLinkEnabled) {
-    const arrow = createArrow({
-      className: acediff3.options.classes.newCodeConnectorLink,
-      topOffset: info.leftStartLine * acediff3.lineHeight,
-      tooltip: 'Copy to right',
-      diffIndex,
-      arrowContent: acediff3.options.classes.newCodeConnectorLinkContent,
-    });
-    acediff3.copyRightContainer.appendChild(arrow);
+function addCopyArrows(acediff3, info, diffIndex, isLeftContainer) {
+  if (isLeftContainer) {
+    if (info.leftEndLine > info.leftStartLine && acediff3.options.left.copyLinkEnabled) {
+      const arrow = createArrow({
+        className: acediff3.options.classes.newCodeConnectorLink,
+        topOffset: info.leftStartLine * acediff3.lineHeight,
+        tooltip: 'Copy to right',
+        diffIndex,
+        arrowContent: acediff3.options.classes.newCodeConnectorLinkContent,
+      });
+      acediff3.copyRightContainer.appendChild(arrow);
+    }
+  } else {
+    if (info.rightEndLine > info.rightStartLine && acediff3.options.right.copyLinkEnabled) {
+      const arrow = createArrow({
+        className: acediff3.options.classes.deletedCodeConnectorLink,
+        topOffset: info.rightStartLine * acediff3.lineHeight,
+        tooltip: 'Copy to left',
+        diffIndex,
+        arrowContent: acediff3.options.classes.deletedCodeConnectorLinkContent,
+      });
+      acediff3.copyLeftContainer.appendChild(arrow);
+    }
   }
 
-  if (info.rightEndLine > info.rightStartLine && acediff3.options.right.copyLinkEnabled) {
-    const arrow = createArrow({
-      className: acediff3.options.classes.deletedCodeConnectorLink,
-      topOffset: info.rightStartLine * acediff3.lineHeight,
-      tooltip: 'Copy to left',
-      diffIndex,
-      arrowContent: acediff3.options.classes.deletedCodeConnectorLinkContent,
-    });
-    acediff3.copyLeftContainer.appendChild(arrow);
-  }
 }
 
 function positionCopyContainers(acediff3) {
@@ -853,7 +856,7 @@ function decorate(acediff3) {
       if (acediff3.options.showConnectors) {
         addConnector(acediff3, acediff3.editors.left, acediff3.editors.common, info.leftStartLine, info.leftEndLine, info.rightStartLine, info.rightEndLine);
       }
-      addCopyArrows(acediff3, info, diffIndex);
+      addCopyArrows(acediff3, info, diffIndex, true);
     }
   }, acediff3);
   acediff3.diffs2.forEach((info, diffIndex) => {
@@ -864,7 +867,7 @@ function decorate(acediff3) {
       if (acediff3.options.showConnectors) {
         addConnector(acediff3, acediff3.editors.common, acediff3.editors.right, info.leftStartLine, info.leftEndLine, info.rightStartLine, info.rightEndLine);
       }
-      addCopyArrows(acediff3, info, diffIndex);
+      addCopyArrows(acediff3, info, diffIndex, false);
     }
   }, acediff3);
 }

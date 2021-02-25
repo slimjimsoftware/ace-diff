@@ -7,7 +7,9 @@
   "unpkg": "dist/ace-diff3.min.js",
   "scripts": {
     "build": "parcel build src/index.js --global AceDiff3 --out-file ace-diff3.min.js && npm run build-css",
+    "build-dev": "parcel build --no-minify src/index.js --global AceDiff3 --out-file ace-diff3.js && npm run build-css-dev",
     "build-css": "parcel build src/styles/ace-diff3.scss --out-file ace-diff3.min.css && parcel build src/styles/ace-diff3-dark.scss --out-file ace-diff3-dark.min.css",
+    "build-css-dev": "parcel build --no-minify src/styles/ace-diff3.scss --out-file ace-diff3.css && parcel build src/styles/ace-diff3-dark.scss --out-file ace-diff3-dark.css",
     "dev": "parcel serve test/fixtures/index.html --open -d .parcel-cache",
     "serve": "parcel test/fixtures/*.html --global AceDiff3 -p 8081 --no-hmr -d .parcel-cache",
     "test": "NODE_ENV=test npm run mocha && cypress run",
